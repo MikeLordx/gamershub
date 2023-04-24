@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:gamershub/editaboutme.dart';
 import 'package:gamershub/profile.dart';
+import 'package:gamershub/subscribe.dart';
 import 'home.dart';
 import 'register.dart';
 import 'login.dart';

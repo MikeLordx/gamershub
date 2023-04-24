@@ -6,16 +6,17 @@ import 'package:gamershub/usernames.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'aboutme.dart';
 import 'home.dart';
-import 'editprofile.dart';
+import 'profile.dart';
+import 'editaboutme.dart';
 
-class profile extends StatefulWidget {
-  const profile({Key? key}) : super(key: key);
+class editprofile extends StatefulWidget {
+  const editprofile({Key? key}) : super(key: key);
 
   @override
-  State<profile> createState() => _profileState();
+  State<editprofile> createState() => _editprofileState();
 }
 
-class _profileState extends State<profile> with SingleTickerProviderStateMixin{
+class _editprofileState extends State<editprofile> with SingleTickerProviderStateMixin{
 
   int paginaSeleccionada = 0;
   TabController? controller;
@@ -163,19 +164,6 @@ class _profileState extends State<profile> with SingleTickerProviderStateMixin{
               Divider(
                 color: Color.fromRGBO(71, 0, 96, 1),
               ),
-              ListTile(
-                leading: Icon(CupertinoIcons.money_dollar, color: Colors.white,),
-                title: Text('Subscribe', style: TextStyle(
-                  color: Colors.white,
-                ),
-                ),
-                onTap: (){
-                  gosubcription(context);
-                },
-              ),
-              Divider(
-                color: Color.fromRGBO(71, 0, 96, 1),
-              ),
               Container(
                 padding: EdgeInsets.fromLTRB(0, 220, 0, 0),
                 child: ListTile(
@@ -193,70 +181,70 @@ class _profileState extends State<profile> with SingleTickerProviderStateMixin{
           ),
         ),
       ),
-        body:
-        Container(
-          color: Color.fromRGBO(27, 4, 64, 1),
-          padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
-          child:
-            Column(
-              children: [
-                Expanded(
-                  child: TabBarView(
-                      controller: controller,
-                      children: [
-                        aboutme(),
-                        favorites(),
-                        usernames(),
-                      ]
-                  ),
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(width: 1, color: Color.fromRGBO(62, 0, 141, 1),),
-                      )
-                  ),
-                  child: Material(
-                    color: Colors.white,
-                    child: TabBar(
-                      controller: controller,
-                      indicator: BoxDecoration(
-                        color: Color.fromRGBO(62, 0, 141, 1),
-                      ),
-                      unselectedLabelColor: Colors.black,
-                      tabs: [
-                        Tab(
-                          child: Container(
-                            child: Text('About Me', style: TextStyle(
-                              fontFamily: 'PTSansNarrow',
-                              fontSize: 17,
-                            ),),
-                          ),
-                        ),
-                        Tab(
-                          child: Container(
-                            child: Text('Favorites', style: TextStyle(
-                              fontFamily: 'PTSansNarrow',
-                              fontSize: 17,
-                            ),),
-                          ),
-                        ),
-                        Tab(
-                          child: Container(
-                            child: Text('Usernames', style: TextStyle(
-                              fontFamily: 'PTSansNarrow',
-                              fontSize: 17,
-                              ),
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+      body:
+      Container(
+        color: Color.fromRGBO(27, 4, 64, 1),
+        padding: EdgeInsets.fromLTRB(0, 0, 0, 0),
+        child:
+        Column(
+          children: [
+            Expanded(
+              child: TabBarView(
+                  controller: controller,
+                  children: [
+                    editaboutme(),
+                    favorites(),
+                    usernames(),
+                  ]
+              ),
             ),
-          ),
+            Container(
+              decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(width: 1, color: Color.fromRGBO(62, 0, 141, 1),),
+                  )
+              ),
+              child: Material(
+                color: Colors.white,
+                child: TabBar(
+                  controller: controller,
+                  indicator: BoxDecoration(
+                    color: Color.fromRGBO(62, 0, 141, 1),
+                  ),
+                  unselectedLabelColor: Colors.black,
+                  tabs: [
+                    Tab(
+                      child: Container(
+                        child: Text('About Me', style: TextStyle(
+                          fontFamily: 'PTSansNarrow',
+                          fontSize: 17,
+                        ),),
+                      ),
+                    ),
+                    Tab(
+                      child: Container(
+                        child: Text('Favorites', style: TextStyle(
+                          fontFamily: 'PTSansNarrow',
+                          fontSize: 17,
+                        ),),
+                      ),
+                    ),
+                    Tab(
+                      child: Container(
+                        child: Text('Usernames', style: TextStyle(
+                          fontFamily: 'PTSansNarrow',
+                          fontSize: 17,
+                        ),
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

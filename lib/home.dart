@@ -5,6 +5,8 @@ import 'register.dart';
 import 'login.dart';
 import 'profile.dart';
 import 'favorites.dart';
+import 'editprofile.dart';
+import 'subscribe.dart';
 
 class home extends StatefulWidget {
   const home({Key? key}) : super(key: key);
@@ -65,6 +67,32 @@ Future<void> gofavorites(context) async {
   );
 }
 
+Future<void> goeditprofile(context) async {
+  SharedPreferences preferences = await SharedPreferences.getInstance();
+
+  await preferences.clear();
+
+  Navigator.of(context).push(MaterialPageRoute(
+      builder: (BuildContext context) {
+        return editprofile();
+      }
+  )
+  );
+}
+
+Future<void> gosubcription(context) async {
+  SharedPreferences preferences = await SharedPreferences.getInstance();
+
+  await preferences.clear();
+
+  Navigator.of(context).push(MaterialPageRoute(
+      builder: (BuildContext context) {
+        return subscription();
+      }
+  )
+  );
+}
+
 class _homeState extends State<home> {
   @override
   Widget build(BuildContext context) {
@@ -119,6 +147,29 @@ class _homeState extends State<home> {
               ),
               Divider(
                 color: Color.fromRGBO(71, 0, 96, 1),
+              ),
+              ListTile(
+                leading: Icon(CupertinoIcons.person_2, color: Colors.white,),
+                title: Text('Edit Profile', style: TextStyle(
+                  color: Colors.white,
+                ),
+                ),
+                onTap: (){
+                  goeditprofile(context);
+                },
+              ),
+              Divider(
+                color: Color.fromRGBO(71, 0, 96, 1),
+              ),
+              ListTile(
+                leading: Icon(CupertinoIcons.money_dollar, color: Colors.white,),
+                title: Text('Subscribe', style: TextStyle(
+                  color: Colors.white,
+                ),
+                ),
+                onTap: (){
+                  gosubcription(context);
+                },
               ),
               Container(
                 padding: EdgeInsets.fromLTRB(0, 220, 0, 0),
