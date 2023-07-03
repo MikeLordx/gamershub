@@ -1,10 +1,17 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:gamershub/signinscreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'home.dart';
 import 'forgotpassword.dart';
+import 'register.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
 class login extends StatefulWidget {
-  const login({Key? key}) : super(key: key);
+
+  login({Key? key}) : super(key: key);
 
   @override
   State<login> createState() => _loginState();
@@ -18,26 +25,52 @@ class _loginState extends State<login> {
   String username = '';
   String password = '';
 
-  LlenarDatos(username, password){
-    if(username == "" || password == ""){
-      mostrar_alerta('Debes llenar todos los datos o te equivocaste con algun dato');
-    }else{
-      guardar_datos(username, password);
+  Future ingresar(user, pass) async {
+    try{
 
-      Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
-          builder: (BuildContext context) {
-            return home();
-          }
-      ), (route) => false);
+      var url = Uri.parse('https://asaicollection.com/gamershub/ver_producto.php');
+      var response = await http.post(url,
+        body: {
+          'username' : user,
+          'password' : pass
+        }
+      ).timeout(const Duration(seconds: 90));
+
+      var respuesta = response.body;
+      var partes = respuesta.split('|'); // Separar la comprobación y el ID
+      var comprobacion = partes[0];
+      var userid = partes[1];
+
+      if(comprobacion == '1')
+      {
+        guardar_datos(username, password, userid);
+        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
+            builder: (BuildContext context){
+              return signinscreen(userid);
+            }
+        ), (route) => false);
+        print(userid);
+      }
+      else{
+        mostrar_alerta(response.body);
+      }
+
+    }on TimeoutException catch(e){
+      print('Conection took longer than expected');
+    }on Error catch(e){
+      mostrar_alerta('User or password incorrect');
     }
-    c_username.text = '';
-    c_password.text = '';
   }
 
-  Future<void> guardar_datos(username, password) async {
+  String savedid = '';
+
+  Future<void> guardar_datos(user, pass, userid) async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
-    await preferences.setString('Username', username);
-    await preferences.setString('Password', password);
+    await preferences.setString('id', userid);
+    await preferences.setString('email', username);
+    await preferences.setString('password', password);
+
+    savedid = (await preferences.getString('id'))!;
   }
 
   mostrar_alerta(mensaje){
@@ -46,7 +79,7 @@ class _loginState extends State<login> {
         barrierDismissible: false,
         builder: (BuildContext){
           return AlertDialog(
-            title: Text('Formulario'),
+            title: Text('Gamers Hub'),
             content: SingleChildScrollView(
                 child: ListBody(
                   children: [
@@ -67,29 +100,6 @@ class _loginState extends State<login> {
     );
   }
 
-  Future<void> ver_datos() async{
-    SharedPreferences preferences = await SharedPreferences.getInstance();
-    username = (await preferences.getString('Username'))!;
-    password = (await preferences.getString('Password'))!;
-
-    print('username: ' + username);
-    print('password: ' + password);
-
-    if(username != null){
-      if(username != ''){
-        Navigator.of(context).push(MaterialPageRoute(
-            builder:(BuildContext context) {
-              return new home();
-            }
-        )
-        );
-        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context){
-          return home();
-        }), (route) => false);
-      }
-    }
-  }
-
   Future<void> forgot_password(context) async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
 
@@ -103,12 +113,24 @@ class _loginState extends State<login> {
     );
   }
 
+  Future<void> go_register(context) async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+
+    await preferences.clear();
+
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (BuildContext context) {
+          return register();
+        }
+    )
+    );
+  }
+
   @override
 
   void initState() {
     // TODO: implement initState
     super.initState();
-    ver_datos();
   }
 
   Widget build(BuildContext context) {
@@ -273,9 +295,21 @@ class _loginState extends State<login> {
                       username = c_username.text;
                       password = c_password.text;
 
-                      LlenarDatos(username, password);
+                      if(username != '' && password != ''){
+                        _show();
+                      }
                     },
                     child: Text('Log In'),
+                  ),
+                  ElevatedButton(
+                    onPressed: (){
+                      FocusScope.of(context).unfocus();
+                      username = c_username.text;
+                      password = c_password.text;
+                      
+                      go_register(context);
+                    },
+                    child: Text('Register'),
                   ),
                 ],
               ),
@@ -285,4 +319,15 @@ class _loginState extends State<login> {
       ),
     );
   }
+  void _show() async {
+    setState(() {
+      SmartDialog.showLoading();
+    });
+    ingresar(username, password).then((value){
+      setState(() {
+        SmartDialog.dismiss();
+      });
+    });
+  }
 }
+

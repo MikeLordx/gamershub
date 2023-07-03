@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gamershub/signinscreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/cupertino.dart';
 import 'register.dart';
@@ -15,6 +16,8 @@ class home extends StatefulWidget {
   State<home> createState() => _homeState();
 }
 
+class _homeState extends State<home> {
+
 Future<void> eliminar_datos(context) async{
   SharedPreferences preferences = await SharedPreferences.getInstance();
 
@@ -28,10 +31,30 @@ Future<void> eliminar_datos(context) async{
   );
 }
 
+String savedid = '';
+String saveduser = '';
+String savedpass = '';
+
+Future<void> ver_datos() async {
+  SharedPreferences preferences = await SharedPreferences.getInstance();
+  setState(() {
+    savedid = preferences.getString('id')!;
+    saveduser = preferences.getString('email')!;
+    savedpass = preferences.getString('password')!;
+  });
+  if(savedid != null){
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (BuildContext context) {
+          return signinscreen(savedid);
+        }
+    )
+    );
+  }
+}
+
 Future<void> gohome(context) async {
   SharedPreferences preferences = await SharedPreferences.getInstance();
 
-  await preferences.clear();
 
   Navigator.of(context).push(MaterialPageRoute(
       builder: (BuildContext context) {
@@ -44,7 +67,6 @@ Future<void> gohome(context) async {
 Future<void> goprofile(context) async {
   SharedPreferences preferences = await SharedPreferences.getInstance();
 
-  await preferences.clear();
 
   Navigator.of(context).push(MaterialPageRoute(
       builder: (BuildContext context) {
@@ -74,7 +96,7 @@ Future<void> goeditprofile(context) async {
 
   Navigator.of(context).push(MaterialPageRoute(
       builder: (BuildContext context) {
-        return editprofile();
+        return editprofile('id');
       }
   )
   );
@@ -93,11 +115,18 @@ Future<void> gosubcription(context) async {
   );
 }
 
-class _homeState extends State<home> {
+@override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    ver_datos();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Image.asset('images/logogamershub.png', width: 40),
         backgroundColor: Color.fromRGBO(62, 0, 141, 1),
       ),
@@ -119,60 +148,8 @@ class _homeState extends State<home> {
                   gohome(context);
                 },
               ),
-              Divider(
-                color: Color.fromRGBO(71, 0, 96, 1),
-              ),
-              ListTile(
-                leading: Icon(Icons.person, color: Colors.white,),
-                title: Text('Profile', style: TextStyle(
-                  color: Colors.white,
-                  ),
-                ),
-                onTap: (){
-                  goprofile(context);
-                },
-              ),
-              Divider(
-                color: Color.fromRGBO(71, 0, 96, 1),
-              ),
-              ListTile(
-                leading: Icon(CupertinoIcons.heart_fill, color: Colors.white,),
-                title: Text('Favorites', style: TextStyle(
-                  color: Colors.white,
-                  ),
-                ),
-                onTap: (){
-                  gofavorites(context);
-                },
-              ),
-              Divider(
-                color: Color.fromRGBO(71, 0, 96, 1),
-              ),
-              ListTile(
-                leading: Icon(CupertinoIcons.person_2, color: Colors.white,),
-                title: Text('Edit Profile', style: TextStyle(
-                  color: Colors.white,
-                ),
-                ),
-                onTap: (){
-                  goeditprofile(context);
-                },
-              ),
-              Divider(
-                color: Color.fromRGBO(71, 0, 96, 1),
-              ),
-              ListTile(
-                leading: Icon(CupertinoIcons.money_dollar, color: Colors.white,),
-                title: Text('Subscribe', style: TextStyle(
-                  color: Colors.white,
-                ),
-                ),
-                onTap: (){
-                  gosubcription(context);
-                },
-              ),
               Container(
-                padding: EdgeInsets.fromLTRB(0, 220, 0, 0),
+                padding: EdgeInsets.fromLTRB(0, 400, 0, 0),
                 child: ListTile(
                   leading: Icon(CupertinoIcons.power, color: Colors.white,),
                   title: Text('Sign In', style: TextStyle(

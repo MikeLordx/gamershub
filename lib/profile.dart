@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:gamershub/favorites.dart';
@@ -7,6 +9,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'aboutme.dart';
 import 'home.dart';
 import 'editprofile.dart';
+import 'subscribe.dart';
+import 'registros.dart';
+import 'package:http/http.dart' as http;
 
 class profile extends StatefulWidget {
   const profile({Key? key}) : super(key: key);
@@ -18,27 +23,43 @@ class profile extends StatefulWidget {
 class _profileState extends State<profile> with SingleTickerProviderStateMixin{
 
   int paginaSeleccionada = 0;
-  TabController? controller;
+  late TabController controller;
+  bool loading = true;
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    controller = TabController(length: 3, initialIndex: paginaSeleccionada, vsync: this);
-  }
+  List<Registros> reg = [];
 
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    super.dispose();
-    controller!.dispose();
+  String? savedid;
+
+  String saveduser = '';
+  String savedpass = '';
+
+  Future<List<Registros>> mostrar_productos() async {
+
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    setState(() {
+      savedid = preferences.getString('id')!;
+    });
+    print(savedid);
+
+    var url = Uri.parse('https://asaicollection.com/gamershub/mostrar_juegosfav.php');
+    var response = await http.post(url, body: {
+      'userid' : savedid,
+    }).timeout(Duration(seconds: 90));
+
+    print(response.body);
+
+    final datos = jsonDecode(response.body);
+
+    List<Registros> registros = [];
+
+    for(var datos in datos){
+      registros.add(Registros.fromJson(datos));
+    }
+
+    return  registros;
   }
 
   Future<void> eliminar_datos(context) async{
-    SharedPreferences preferences = await SharedPreferences.getInstance();
-
-    await preferences.clear();
-
     Navigator.of(context).push(MaterialPageRoute(
         builder: (BuildContext context){
           return login();
@@ -48,10 +69,6 @@ class _profileState extends State<profile> with SingleTickerProviderStateMixin{
   }
 
   Future<void> gohome(context) async {
-    SharedPreferences preferences = await SharedPreferences.getInstance();
-
-    await preferences.clear();
-
     Navigator.of(context).push(MaterialPageRoute(
         builder: (BuildContext context) {
           return home();
@@ -61,10 +78,6 @@ class _profileState extends State<profile> with SingleTickerProviderStateMixin{
   }
 
   Future<void> goprofile(context) async {
-    SharedPreferences preferences = await SharedPreferences.getInstance();
-
-    await preferences.clear();
-
     Navigator.of(context).push(MaterialPageRoute(
         builder: (BuildContext context) {
           return profile();
@@ -74,16 +87,42 @@ class _profileState extends State<profile> with SingleTickerProviderStateMixin{
   }
 
   Future<void> gofavorites(context) async {
-    SharedPreferences preferences = await SharedPreferences.getInstance();
-
-    await preferences.clear();
-
     Navigator.of(context).push(MaterialPageRoute(
         builder: (BuildContext context) {
           return favorites();
         }
     )
     );
+  }
+
+  Future<void> gosubcription(context) async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+
+    await preferences.clear();
+
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (BuildContext context) {
+          return subscription();
+        }
+    )
+    );
+  }
+
+
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    controller = TabController(length: 3, vsync: this);
+    controller.animateTo(1);
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    controller!.dispose();
   }
 
   Future<void> goeditprofile(context) async {
@@ -93,7 +132,7 @@ class _profileState extends State<profile> with SingleTickerProviderStateMixin{
 
     Navigator.of(context).push(MaterialPageRoute(
         builder: (BuildContext context) {
-          return editprofile();
+          return editprofile('id');
         }
     )
     );
@@ -103,95 +142,12 @@ class _profileState extends State<profile> with SingleTickerProviderStateMixin{
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Image.asset('images/logogamershub.png', width: 40),
-        backgroundColor: Color.fromRGBO(62, 0, 141, 1),
-      ),
-      endDrawer: Drawer(
-        width: 200,
-        child: Container(
-          decoration: BoxDecoration(
-              color: Color.fromRGBO(43, 0, 36, 1)
-          ),
-          child: ListView(
-            children: [
-              ListTile(
-                leading: Icon(Icons.home, color: Colors.white,),
-                title: Text('Home', style: TextStyle(
-                  color: Colors.white,
-                ),
-                ),
-                onTap: (){
-                  gohome(context);
-                },
-              ),
-              Divider(
-                color: Color.fromRGBO(71, 0, 96, 1),
-              ),
-              ListTile(
-                leading: Icon(Icons.person, color: Colors.white,),
-                title: Text('Profile', style: TextStyle(
-                  color: Colors.white,
-                ),
-                ),
-              ),
-              Divider(
-                color: Color.fromRGBO(71, 0, 96, 1),
-              ),
-              ListTile(
-                leading: Icon(CupertinoIcons.heart_fill, color: Colors.white,),
-                title: Text('Favorites', style: TextStyle(
-                  color: Colors.white,
-                ),
-                ),
-                onTap: (){
-                  gofavorites(context);
-                },
-              ),
-              Divider(
-                color: Color.fromRGBO(71, 0, 96, 1),
-              ),
-              ListTile(
-                leading: Icon(CupertinoIcons.person_2, color: Colors.white,),
-                title: Text('Edit Profile', style: TextStyle(
-                  color: Colors.white,
-                ),
-                ),
-                onTap: (){
-                  goeditprofile(context);
-                },
-              ),
-              Divider(
-                color: Color.fromRGBO(71, 0, 96, 1),
-              ),
-              ListTile(
-                leading: Icon(CupertinoIcons.money_dollar, color: Colors.white,),
-                title: Text('Subscribe', style: TextStyle(
-                  color: Colors.white,
-                ),
-                ),
-                onTap: (){
-                  gosubcription(context);
-                },
-              ),
-              Divider(
-                color: Color.fromRGBO(71, 0, 96, 1),
-              ),
-              Container(
-                padding: EdgeInsets.fromLTRB(0, 220, 0, 0),
-                child: ListTile(
-                  leading: Icon(CupertinoIcons.power, color: Colors.white,),
-                  title: Text('Sign In', style: TextStyle(
-                    color: Colors.white,
-                  ),
-                  ),
-                  onTap: (){
-                    eliminar_datos(context);
-                  },
-                ),
-              )
-            ],
-          ),
+        title: Row(
+          children: [
+            Image.asset('images/logogamershub.png', width: 40),
+          ],
         ),
+        backgroundColor: Color.fromRGBO(62, 0, 141, 1),
       ),
         body:
         Container(
@@ -243,7 +199,7 @@ class _profileState extends State<profile> with SingleTickerProviderStateMixin{
                         ),
                         Tab(
                           child: Container(
-                            child: Text('Usernames', style: TextStyle(
+                            child: Text('Profile', style: TextStyle(
                               fontFamily: 'PTSansNarrow',
                               fontSize: 17,
                               ),

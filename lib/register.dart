@@ -1,6 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:gamershub/login.dart';
+import 'package:gamershub/signinscreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'home.dart';
+import 'package:http/http.dart' as http;
 
 class register extends StatefulWidget {
   const register({Key? key}) : super(key: key);
@@ -14,33 +19,99 @@ class _registerState extends State<register> {
   var c_username = TextEditingController();
   var c_password = TextEditingController();
   var c_email = TextEditingController();
+  var c_juegofavorito = TextEditingController();
+  var c_edad = TextEditingController();
 
   String username = '';
   String password = '';
   String email = '';
+  String juegofavorito = '';
+  String edad = '';
 
-  LlenarDatos(username, password, email){
-    if(username == "" || password == "" || email == ""){
-      mostrar_alerta('Debes llenar todos los datos o te equivocaste con algun dato');
-    }else{
-      guardar_datos(username, password, email);
 
-      Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
-          builder: (BuildContext context) {
-            return home();
-          }
-      ), (route) => false);
-    }
-    c_username.text = '';
-    c_password.text = '';
-    c_email.text = '';
+  String savedid = '';
+  String saveduser = '';
+  String savedpass = '';
+
+  Future<void> ver_datos() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    setState(() {
+      savedid = preferences.getString('id')!;
+      saveduser = preferences.getString('email')!;
+      savedpass = preferences.getString('password')!;
+    });
+    print(savedid);
+    print(saveduser);
+    print(savedpass);
   }
 
-  Future<void> guardar_datos(username, password, email) async {
+  Future<void> guardar_datos(user, pass, userid) async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
-    await preferences.setString('Username', username);
-    await preferences.setString('Password', password);
-    await preferences.setString('Email', email);
+    await preferences.setString('id', userid);
+    await preferences.setString('email', username);
+    await preferences.setString('password', password);
+
+    savedid = (await preferences.getString('id'))!;
+  }
+
+  subir_usuario() async {
+    var url = Uri.parse(
+        'https://asaicollection.com/gamershub/guardar_usuario.php');
+    var response = await http.post(url, body: {
+      'username': username,
+      'password': password,
+      'email': email,
+      'juegofavorito' : juegofavorito,
+      'edad' : edad,
+    }).timeout(Duration(seconds: 90));
+
+    if (response.body == '1') {
+      mostrar_alerta('Usuario registrado con exito');
+      c_username.text == '';
+      c_password.text == '';
+      c_email.text == '';
+      c_juegofavorito.text == '';
+      c_edad.text = '';
+    } else {
+      mostrar_alerta(response.body);
+    }
+  }
+
+  Future ingresar(user, pass) async {
+    try{
+
+      var url = Uri.parse('https://asaicollection.com/gamershub/ver_producto.php');
+      var response = await http.post(url,
+          body: {
+            'username' : user,
+            'password' : pass
+          }
+      ).timeout(const Duration(seconds: 90));
+
+      var respuesta = response.body;
+      var partes = respuesta.split('|'); // Separar la comprobación y el ID
+      var comprobacion = partes[0];
+      var userid = partes[1];
+
+      if(comprobacion == '1')
+      {
+        guardar_datos(username, password, userid);
+        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
+            builder: (BuildContext context){
+              return signinscreen(userid);
+            }
+        ), (route) => false);
+        print(userid);
+      }
+      else{
+        mostrar_alerta(response.body);
+      }
+
+    }on TimeoutException catch(e){
+      print('Conection took longer than expected');
+    }on Error catch(e){
+      mostrar_alerta('User or password incorrect');
+    }
   }
 
   mostrar_alerta(mensaje){
@@ -49,7 +120,7 @@ class _registerState extends State<register> {
         barrierDismissible: false,
         builder: (BuildContext){
           return AlertDialog(
-            title: Text('Formulario'),
+            title: Text('Gamers Hub'),
             content: SingleChildScrollView(
                 child: ListBody(
                   children: [
@@ -60,7 +131,13 @@ class _registerState extends State<register> {
             actions: [
               TextButton(
                 onPressed: (){
-                  Navigator.of(context).pop();
+                  ingresar(username, password);
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) {
+                        return signinscreen(savedid);
+                      }
+                  )
+                  );
                 },
                 child: Text('Aceptar'),
               ),
@@ -70,37 +147,11 @@ class _registerState extends State<register> {
     );
   }
 
-  Future<void> ver_datos() async{
-    SharedPreferences preferences = await SharedPreferences.getInstance();
-    username = (await preferences.getString('Username'))!;
-    password = (await preferences.getString('Password'))!;
-    email = (await preferences.getString('Email'))!;
-
-    print('username: ' + username);
-    print('password: ' + password);
-    print('email: ' + email);
-
-    if(email != null){
-      if(email != ''){
-        Navigator.of(context).push(MaterialPageRoute(
-            builder:(BuildContext context) {
-              return new home();
-            }
-        )
-        );
-        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context){
-          return home();
-        }), (route) => false);
-      }
-    }
-  }
-
   @override
 
   void initState() {
     // TODO: implement initState
     super.initState();
-    ver_datos();
   }
 
   Widget build(BuildContext context) {
@@ -305,14 +356,127 @@ class _registerState extends State<register> {
                       ),
                     ),
                   ),
+                  Container(
+                    padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    child: TextField(
+                      controller: c_juegofavorito,
+                      autofocus: false,
+                      keyboardType: TextInputType.text,
+                      textInputAction: TextInputAction.send,
+                      autocorrect: true,
+                      textCapitalization: TextCapitalization.words,
+                      textAlign: TextAlign.justify,
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.black,
+                      ),
+                      obscureText: false,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.transparent,
+                        //icon: Icon(Icons.safety_check),
+                        prefixIcon: Icon(Icons.keyboard_control, color: Color.fromRGBO(100, 100, 100, .4),),
+                        //prefix: Image.asset('images/image1.png', width: 10,),
+                        hintText: 'Favorite game',
+                        hintStyle: TextStyle(
+                            fontSize: 25,
+                            fontFamily: 'PTSansNarrow',
+                            fontWeight: FontWeight.bold,
+                            color: Color.fromRGBO(100, 100, 100, .4)
+                        ),
+                        helperText: 'Provide your favorite game',
+                        helperStyle: TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'PTSansNarrow',
+                            fontWeight: FontWeight.normal,
+                            color: Colors.white
+                        ),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(40)),
+                          borderSide: BorderSide(
+                            color: Colors.black,
+                            width: 2,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(40)),
+                          borderSide: BorderSide(
+                            color: Colors.pink,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    child: TextField(
+                      controller: c_edad,
+                      autofocus: false,
+                      keyboardType: TextInputType.number,
+                      textInputAction: TextInputAction.send,
+                      autocorrect: true,
+                      textCapitalization: TextCapitalization.words,
+                      textAlign: TextAlign.justify,
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.black,
+                      ),
+                      obscureText: false,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.transparent,
+                        //icon: Icon(Icons.safety_check),
+                        prefixIcon: Icon(Icons.keyboard_control, color: Color.fromRGBO(100, 100, 100, .4),),
+                        //prefix: Image.asset('images/image1.png', width: 10,),
+                        hintText: 'Age',
+                        hintStyle: TextStyle(
+                            fontSize: 25,
+                            fontFamily: 'PTSansNarrow',
+                            fontWeight: FontWeight.bold,
+                            color: Color.fromRGBO(100, 100, 100, .4)
+                        ),
+                        helperText: 'Provide your age',
+                        helperStyle: TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'PTSansNarrow',
+                            fontWeight: FontWeight.normal,
+                            color: Colors.white
+                        ),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(40)),
+                          borderSide: BorderSide(
+                            color: Colors.black,
+                            width: 2,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(40)),
+                          borderSide: BorderSide(
+                            color: Colors.pink,
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                   ElevatedButton(
                     onPressed: (){
                       FocusScope.of(context).unfocus();
                       username = c_username.text;
                       email = c_email.text;
                       password = c_password.text;
+                      juegofavorito = c_juegofavorito.text;
+                      edad = c_edad.text;
 
-                      LlenarDatos(username, password, email);
+                      if(username == '' || email == '' || password == ''){
+                        mostrar_alerta('Debes llenar todos los datos');
+                      }else{
+                        subir_usuario();
+                        guardar_datos(username, password, savedid);
+                      }
                     },
                     child: Text('Sign up'),
                   ),

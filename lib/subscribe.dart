@@ -21,15 +21,10 @@ class _subscriptionState extends State<subscription> {
 
   LlenarDatos(username, password){
     if(username == "" || password == ""){
-      mostrar_alerta('Debes llenar todos los datos o te equivocaste con algun dato');
+      mostrar_alerta('Debes llenar todos los datos');
     }else{
       guardar_datos(username, password);
-
-      Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
-          builder: (BuildContext context) {
-            return profile();
-          }
-      ), (route) => false);
+      mostrar_alertasuccess('Gracias por suscribirte al nivel premium');
     }
     c_username.text = '';
     c_password.text = '';
@@ -41,13 +36,44 @@ class _subscriptionState extends State<subscription> {
     await preferences.setString('Password', password);
   }
 
+  mostrar_alertasuccess(mensaje){
+    showDialog(
+        context:context,
+        barrierDismissible: false,
+        builder: (BuildContext){
+          return AlertDialog(
+            title: Text('Gamers Hub'),
+            content: SingleChildScrollView(
+                child: ListBody(
+                  children: [
+                    Text(mensaje)
+                  ],
+                )
+            ),
+            actions: [
+              TextButton(
+                onPressed: (){
+                  Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
+                      builder: (context) {
+                        return profile();
+                      }
+                  ), (route) => false);
+                },
+                child: Text('Aceptar'),
+              ),
+            ],
+          );
+        }
+    );
+  }
+
   mostrar_alerta(mensaje){
     showDialog(
         context:context,
         barrierDismissible: false,
         builder: (BuildContext){
           return AlertDialog(
-            title: Text('Formulario'),
+            title: Text('Gamers Hub'),
             content: SingleChildScrollView(
                 child: ListBody(
                   children: [

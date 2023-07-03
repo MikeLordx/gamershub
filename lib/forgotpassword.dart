@@ -41,7 +41,7 @@ class _passState extends State<pass> {
         barrierDismissible: false,
         builder: (BuildContext){
           return AlertDialog(
-            title: Text('Formulario'),
+            title: Text('Gamers Hub'),
             content: SingleChildScrollView(
                 child: ListBody(
                   children: [
@@ -52,7 +52,12 @@ class _passState extends State<pass> {
             actions: [
               TextButton(
                 onPressed: (){
-                  Navigator.of(context).pop();
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) {
+                        return home();
+                      }
+                  )
+                  );
                 },
                 child: Text('Aceptar'),
               ),
@@ -202,10 +207,7 @@ class _passState extends State<pass> {
                   ),
                   ElevatedButton(
                     onPressed: (){
-                      FocusScope.of(context).unfocus();
-                      username = c_username.text;
-
-                      LlenarDatos(username);
+                      mostrar_alerta('Se ha enviado un mensaje al correo registrado con tu usuaio');
                     },
                     child: Text('Send'),
                   ),
